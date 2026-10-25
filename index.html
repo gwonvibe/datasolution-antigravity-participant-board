@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>교육·세미나 참가자 관리판</title>
+  <style>
+    :root {
+      --bg-page: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --border-dark: #CBD5E1;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-subtle: #EFF6FF;
+      --font-family: Pretendard, "Apple SD Gothic Neo", sans-serif;
+      --mono: "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding: 28px 24px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 헤더 및 동기화 상태 바 */
+    .header-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title-area h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .title-area p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .sync-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sync-info {
+      text-align: right;
+    }
+
+    .sync-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #10B981;
+      display: inline-block;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: #FFFFFF;
+      color: var(--text);
+      border-color: var(--border-dark);
+    }
+
+    .btn-secondary:hover {
+      background-color: #F1F5F9;
+    }
+
+    /* 통계 KPI 카드 그리드 */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    .kpi-card .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .kpi-card .val {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 4px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 컨트롤 바: 검색, 필터, 일괄 액션 */
+    .toolbar {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .search-box {
+      position: relative;
+      width: 280px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 7px 12px;
+      font-size: 13px;
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      font-family: inherit;
+    }
+
+    .search-box input:focus {
+      outline: 2px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-chip {
+      background: #FFFFFF;
+      border: 1px solid var(--border-dark);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-chip:hover {
+      color: var(--text);
+      border-color: #94A3B8;
+    }
+
+    .filter-chip.active {
+      background-color: var(--text);
+      color: #FFFFFF;
+      border-color: var(--text);
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* 참가자 데이터 테이블 */
+    .table-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background-color: #F8FAFC;
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid var(--border-dark);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    th[data-sort] {
+      cursor: pointer;
+    }
+
+    th[data-sort]:hover {
+      background-color: #F1F5F9;
+    }
+
+    th.active-sort {
+      color: var(--accent);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #F8FAFC;
+    }
+
+    tr.row-selected td {
+      background-color: #EFF6FF;
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-muted { color: var(--text-muted); }
+    .font-bold { font-weight: 700; }
+    .font-mono { font-family: var(--mono); font-size: 12px; }
+
+    /* 상태 뱃지 및 드롭다운 */
+    .status-dropdown {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .badge-applied {
+      background-color: #FEF3C7;
+      color: #92400E;
+      border-color: #FDE68A;
+    }
+
+    .badge-confirmed {
+      background-color: #DBEAFE;
+      color: #1E40AF;
+      border-color: #BFDBFE;
+    }
+
+    .badge-attended {
+      background-color: #DCFCE7;
+      color: #166534;
+      border-color: #BBF7D0;
+    }
+
+    .badge-absent {
+      background-color: #F1F5F9;
+      color: #64748B;
+      border-color: #E2E8F0;
+    }
+
+    .contract-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: right;
+      padding: 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 헤더 영역 -->
+    <div class="header-card">
+      <div class="title-area">
+        <h1>교육·세미나 참가자 관리판</h1>
+        <p>교수·연구자·공공정책 실무자 참가 신청자 30명 명단 관리 및 Google Sheets 실시간 연동 인터페이스</p>
+      </div>
+      <div class="sync-area">
+        <div class="sync-info">
+          <div class="sync-label">
+            <span class="sync-dot"></span>
+            <span id="syncStatus">검증용 Google Sheet 연결 준비 · 아직 불러오지 않음</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" id="configUrlBtn" title="Google Apps Script 웹앱 URL 설정">연동 설정</button>
+        <button type="button" class="btn btn-primary" id="refreshBtn">
+          <span>⟳ 시트에서 새로고침</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 상태별 인원 요약 KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">전체 등록 인원</div>
+        <div class="val" id="countTotal">30</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">신청 대기</div>
+        <div class="val" id="countApplied" style="color: #B45309;">8</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">참가 확정</div>
+        <div class="val" id="countConfirmed" style="color: #1D4ED8;">15</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">참석 완료</div>
+        <div class="val" id="countAttended" style="color: #15803D;">5</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">불참</div>
+        <div class="val" id="countAbsent" style="color: #64748B;">2</div>
+      </div>
+    </div>
+
+    <!-- 툴바: 검색, 필터, 안내 메일 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="이름, 소속, 이메일 검색...">
+        </div>
+        <div class="filter-chips">
+          <button type="button" class="filter-chip active" data-filter="전체">전체 (30)</button>
+          <button type="button" class="filter-chip" data-filter="신청">신청 (8)</button>
+          <button type="button" class="filter-chip" data-filter="확정">확정 (15)</button>
+          <button type="button" class="filter-chip" data-filter="참석">참석 (5)</button>
+          <button type="button" class="filter-chip" data-filter="불참">불참 (2)</button>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" class="btn btn-secondary" id="mailBtn">✉ 선택 인원 안내 메일 발송</button>
+      </div>
+    </div>
+
+    <!-- 참가자 표 -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;" class="text-center">
+              <input type="checkbox" id="selectAll" title="전체 선택">
+            </th>
+            <th style="width: 50px;" class="text-center">No</th>
+            <th data-sort="name">이름 <span class="sort-icon">⇅</span></th>
+            <th data-sort="org">소속 <span class="sort-icon">⇅</span></th>
+            <th style="width: 80px;">직함</th>
+            <th>이메일</th>
+            <th style="width: 130px;">연락처</th>
+            <th data-sort="date" style="width: 110px;" class="text-center">신청일 <span class="sort-icon">⇅</span></th>
+            <th style="width: 100px;" class="text-center">상태 변경</th>
+          </tr>
+        </thead>
+        <tbody id="participantTableBody">
+          <!-- JS 동적 렌더링 -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="contract-note">
+      ※ Google Sheets Apps Script doGet 데이터 계약: { 이름, 소속, 직함, 이메일, 연락처, 신청일, 상태 } 100% 호환 구조
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
